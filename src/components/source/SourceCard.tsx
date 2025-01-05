@@ -1,32 +1,37 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import { SourceIcon } from './SourceIcon';
+import { Language } from '../../types/language';
+import { translations } from '../../utils/i18n';
 import type { Source } from '../../types/source';
 
 interface SourceCardProps {
   source: Source;
+  language: Language;
 }
 
-export function SourceCard({ source }: SourceCardProps) {
+export function SourceCard({ source, language }: SourceCardProps) {
+  const t = translations[language];
+
   const renderMetrics = () => {
     switch (source.platform) {
       case 'amazon':
         return source.rating && (
           <span className="text-sm text-gray-400">
-            {source.rating.toFixed(1)} ★ ({source.reviewCount} reviews)
+            {source.rating.toFixed(1)} ★ ({source.reviewCount} {t.reviews})
           </span>
         );
       case 'reddit':
       case 'stackoverflow':
         return source.votes && (
           <span className="text-sm text-gray-400">
-            {source.votes} votes
+            {source.votes} {t.votes}
           </span>
         );
       case 'scholar':
         return source.citations && (
           <span className="text-sm text-gray-400">
-            {source.citations} citations
+            {source.citations} {t.citations}
           </span>
         );
       case 'expert':

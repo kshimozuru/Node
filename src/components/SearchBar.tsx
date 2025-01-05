@@ -3,9 +3,10 @@ import { Search } from 'lucide-react';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
+  placeholder: string;
 }
 
-export function SearchBar({ onSearch }: SearchBarProps) {
+export function SearchBar({ onSearch, placeholder }: SearchBarProps) {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,7 +23,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for best practices..."
+          placeholder={placeholder}
           className="w-full px-6 py-4 text-lg rounded-lg border border-gray-800 bg-gray-800 text-white placeholder-gray-500 focus:border-white/20 focus:ring-1 focus:ring-white/20 focus:outline-none shadow-lg transition-colors"
         />
         <button

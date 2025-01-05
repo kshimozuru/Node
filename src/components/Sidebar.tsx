@@ -1,19 +1,34 @@
 import React from 'react';
 import { Menu, X, Home, Search, Star, Settings, HelpCircle, GitBranch } from 'lucide-react';
 import { Logo } from './Logo';
+import { Language } from '../types/language';
+import { translations } from '../utils/i18n';
 
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  onLogoClick: () => void;
+  onFavoritesClick: () => void;
+  onSettingsClick: () => void;
+  language: Language;
 }
 
-export function Sidebar({ isOpen, onToggle }: SidebarProps) {
+export function Sidebar({ 
+  isOpen, 
+  onToggle, 
+  onLogoClick,
+  onFavoritesClick,
+  onSettingsClick,
+  language 
+}: SidebarProps) {
+  const t = translations[language];
+  
   const menuItems = [
-    { icon: Home, label: 'Home' },
-    { icon: Search, label: 'Search' },
-    { icon: Star, label: 'Favorites' },
-    { icon: Settings, label: 'Settings' },
-    { icon: HelpCircle, label: 'Help' },
+    { icon: Home, label: t.home, onClick: onLogoClick },
+    { icon: Search, label: t.search, onClick: onLogoClick },
+    { icon: Star, label: t.favorites, onClick: onFavoritesClick },
+    { icon: Settings, label: t.settings, onClick: onSettingsClick },
+    { icon: HelpCircle, label: t.help },
   ];
 
   return (
@@ -29,26 +44,29 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       </button>
 
       <div className="p-4">
-        <div className={`mb-8 ${!isOpen ? 'justify-center' : ''} flex overflow-hidden`}>
+        <button
+          onClick={onLogoClick}
+          className={`mb-8 ${!isOpen ? 'justify-center' : ''} flex overflow-hidden hover:opacity-80 transition-opacity`}
+        >
           {isOpen ? (
             <Logo />
           ) : (
             <GitBranch size={28} className="text-white" strokeWidth={2.5} />
           )}
-        </div>
+        </button>
 
         <nav>
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.label}>
-                <a
-                  href="#"
-                  className={`flex items-center gap-4 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors
+                <button
+                  onClick={item.onClick}
+                  className={`w-full flex items-center gap-4 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors
                   ${!isOpen && 'justify-center'} text-gray-400 hover:text-white`}
                 >
                   <item.icon size={20} />
                   {isOpen && <span>{item.label}</span>}
-                </a>
+                </button>
               </li>
             ))}
           </ul>
