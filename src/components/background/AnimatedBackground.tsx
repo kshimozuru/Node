@@ -3,8 +3,24 @@ import { NetworkGrid } from './NetworkGrid';
 import { DataPacketManager } from './DataPacket';
 import { render } from './renderer';
 
-export function AnimatedBackground() {
+interface AnimatedBackgroundProps {
+  isZoomed?: boolean;
+  selectedNodeIndex?: number;
+}
+
+export function AnimatedBackground({ 
+  isZoomed = false, 
+  selectedNodeIndex 
+}: AnimatedBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scaleRef = useRef(1);
+  const targetScaleRef = useRef(1);
+  const selectedNodeRef = useRef<number | undefined>(selectedNodeIndex);
+
+  useEffect(() => {
+    targetScaleRef.current = isZoomed ? 1.5 : 1; // 拡大率を1.5に増加
+    selectedNodeRef.current = selectedNodeIndex;
+  }, [isZoomed, selectedNodeIndex]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,16 +60,31 @@ export function AnimatedBackground() {
     };
 
     const animate = (time: number) => {
-      grid.update(time); // ネットワークの回転を更新
+      // スムーズなスケール変更
+      const scaleDiff = targetScaleRef.current - scaleRef.current;
+      if (Math.abs(scaleDiff) > 0.001) {
+        scaleRef.current += scaleDiff * 0.05;
+      }
+
+      grid.update(time, selectedNodeRef.current);
       spawnPackets(time);
       packetManager.update(grid.nodes);
+
+      ctx.save();
+      // キャンバスの中心を基準に拡大
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(scaleRef.current, scaleRef.current);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
       render({
         ctx,
         width: canvas.width,
         height: canvas.height,
-        time
+        time,
+        selectedNodeIndex: selectedNodeRef.current
       }, grid, packetManager.getPackets());
+
+      ctx.restore();
 
       animationFrameId = requestAnimationFrame(animate);
     };

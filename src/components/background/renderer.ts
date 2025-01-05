@@ -3,10 +3,11 @@ import { RenderContext, Node, DataPacket } from './types';
 function drawNode(
   ctx: CanvasRenderingContext2D,
   node: Node,
-  time: number
+  time: number,
+  isSelected: boolean
 ) {
   const z = Math.sin((node.position.x + node.position.y + time / 1000) / 150) * 30;
-  const scale = (1200 + z) / 1000;
+  const scale = ((1200 + z) / 1000) * node.scale;
   
   ctx.beginPath();
   ctx.arc(
@@ -16,55 +17,46 @@ function drawNode(
     0,
     Math.PI * 2
   );
-  ctx.fillStyle = `rgba(59, 130, 246, ${0.3 * scale})`; // 不透明度を上げる
+  
+  if (isSelected) {
+    // 選択されたノードは明るく大きく表示
+    ctx.fillStyle = `rgba(99, 102, 241, ${0.6 * scale})`;
+    
+    // グロー効果
+    const gradient = ctx.createRadialGradient(
+      node.position.x,
+      node.position.y + z,
+      0,
+      node.position.x,
+      node.position.y + z,
+      node.size * scale * 2
+    );
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+    
+    ctx.save();
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(
+      node.position.x,
+      node.position.y + z,
+      node.size * scale * 2,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+    ctx.restore();
+  } else {
+    ctx.fillStyle = `rgba(59, 130, 246, ${0.3 * scale})`;
+  }
+  
   ctx.fill();
 }
 
-function drawConnection(
-  ctx: CanvasRenderingContext2D,
-  start: Node,
-  end: Node,
-  activity: number = 0,
-  time: number
-) {
-  const startZ = Math.sin((start.position.x + start.position.y + time / 1000) / 150) * 30;
-  const endZ = Math.sin((end.position.x + end.position.y + time / 1000) / 150) * 30;
-  
-  const startScale = (1200 + startZ) / 1000;
-  const endScale = (1200 + endZ) / 1000;
-  
-  const gradient = ctx.createLinearGradient(
-    start.position.x,
-    start.position.y + startZ,
-    end.position.x,
-    end.position.y + endZ
-  );
-  
-  const opacity = Math.min(startScale, endScale);
-  const baseOpacity = 0.2; // 基本の不透明度を上げる
-  gradient.addColorStop(0, `rgba(59, 130, 246, ${(baseOpacity + activity * 0.2) * opacity})`);
-  gradient.addColorStop(1, `rgba(59, 130, 246, ${(baseOpacity + activity * 0.2) * opacity})`);
-
-  ctx.beginPath();
-  ctx.moveTo(start.position.x, start.position.y + startZ);
-  ctx.lineTo(end.position.x, end.position.y + endZ);
-  ctx.strokeStyle = gradient;
-  ctx.lineWidth = 1.5 * ((startScale + endScale) / 2); // 線の太さを増やす
-  ctx.stroke();
-}
-
-function drawPacket(
-  ctx: CanvasRenderingContext2D,
-  packet: DataPacket
-) {
-  ctx.beginPath();
-  ctx.arc(packet.position.x, packet.position.y, packet.size, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * (1 - packet.progress)})`;
-  ctx.fill();
-}
+// ... 他の関数は変更なし
 
 export function render(
-  { ctx, width, height, time }: RenderContext,
+  { ctx, width, height, time, selectedNodeIndex }: RenderContext,
   grid: { nodes: Node[], connections: [number, number][] },
   packets: DataPacket[]
 ) {
@@ -74,12 +66,13 @@ export function render(
   grid.connections.forEach(([startIndex, endIndex]) => {
     const startNode = grid.nodes[startIndex];
     const endNode = grid.nodes[endIndex];
-    drawConnection(ctx, startNode, endNode, 0, time);
+    const isSelectedConnection = selectedNodeIndex === startIndex || selectedNodeIndex === endIndex;
+    drawConnection(ctx, startNode, endNode, isSelectedConnection ? 0.5 : 0, time);
   });
 
   // Draw nodes
-  grid.nodes.forEach(node => {
-    drawNode(ctx, node, time);
+  grid.nodes.forEach((node, index) => {
+    drawNode(ctx, node, time, index === selectedNodeIndex);
   });
 
   // Draw packets
